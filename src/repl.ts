@@ -1,32 +1,40 @@
+// repl.ts
+
 import { State } from './state.js';
 
+// 1. Add and export this function. The test file needs it.
 export function cleanInput(input: string): string[] {
-  return input.trim().split(/\s+/);
+  return input.trim().toLowerCase().split(/\s+/);
 }
 
-export function startREPL({
-  rl,
-  commands,
-}: {
-  rl: State['rl'];
-  commands: State['commands'];
-}): void {
-  rl.prompt();
+export function startREPL(state: State): void {
+  console.log('Welcome to the Pokedex! Type "help" for commands.');
+  state.rl.prompt();
 
-  rl.on('line', (input) => {
-    const cleanedInput = cleanInput(input);
-    const commandName = cleanedInput[0];
+  state.rl
+    .on('line', async (line: string) => {
+      // 2. Use the new cleanInput function to parse the command
+      const parts = cleanInput(line);
+      const commandName = parts[0];
+      // const args = parts.slice(1); // For commands that need arguments later
 
-    if (commands[commandName]) {
-      try {
-        commands[commandName].callback(commands);
-      } catch (error) {
-        console.error(`Error executing command '${commandName}':`, error);
+      const command = state.commands[commandName];
+
+      if (command) {
+        try {
+          // The callback doesn't need args for map/mapb, so this is fine
+          await command.callback(state);
+        } catch (error) {
+          console.error('An error occurred while executing the command.');
+        }
+      } else if (commandName) {
+        console.log('Unknown command. Type "help" for a list of commands.');
       }
-    } else {
-      console.log('Unknown command');
-    }
 
-    rl.prompt();
-  });
+      state.rl.prompt();
+    })
+    .on('close', () => {
+      console.log('Exiting Pokedex. Goodbye!');
+      process.exit(0);
+    });
 }
