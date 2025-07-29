@@ -51,5 +51,44 @@ export function getCommands(): Record<string, CLICommand> {
         );
       },
     },
+    explore: {
+      name: 'explore',
+      description: 'Explores a location area to find encounterable Pokemon.',
+      // Use ...args to capture all arguments passed to the command
+      async callback(state: State, ...args: string[]) {
+        if (args.length === 0) {
+          console.log('Error: You must provide a location area name.');
+          console.log('Example: explore pastoria-city-area');
+          return;
+        }
+        // Join all arguments with a hyphen to match the API's naming convention
+        const locationAreaName = args.join('-');
+        console.log(`Exploring ${locationAreaName}...`);
+
+        try {
+          const locationArea = await state.pokeapi.fetchLocationArea(
+            locationAreaName
+          );
+
+          if (!locationArea) {
+            console.log(`Location area "${locationAreaName}" not found.`);
+            return;
+          }
+
+          if (locationArea.pokemon_encounters.length === 0) {
+            console.log('Found no Pokemon in this area.');
+            return;
+          }
+
+          console.log('Found Pokemon:');
+          locationArea.pokemon_encounters.forEach((encounter) => {
+            console.log(` - ${encounter.pokemon.name}`);
+          });
+        } catch (error) {
+          // This will catch network errors from the fetch call
+          console.error('An error occurred while exploring the area.');
+        }
+      },
+    },
   };
 }
