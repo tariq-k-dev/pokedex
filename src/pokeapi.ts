@@ -76,6 +76,39 @@ export class PokeAPI {
       throw error;
     }
   }
+
+  /**
+   * Fetches a specific Pokemon by name from the PokeAPI.
+   * @param pokemonName - The name of the Pokemon to fetch.
+   * @returns A promise that resolves to a Pokemon object, or null if not found.
+   */
+  async fetchPokemonByName(pokemonName: string): Promise<Pokemon | null> {
+    const url = `${PokeAPI.baseURL}/pokemon/${pokemonName}`;
+
+    const cachedData = this.cache.get<Pokemon>(url);
+    if (cachedData) {
+      // console.log('Cache hit for Pokemon!');
+      return cachedData;
+    }
+    // console.log('Cache miss for Pokemon!');
+
+    try {
+      const response = await fetch(url);
+      if (response.status === 404) {
+        return null; // Pokemon not found
+      }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch from ${url}`);
+      }
+
+      const data: Pokemon = await response.json();
+      this.cache.add(url, data);
+      return data;
+    } catch (error) {
+      console.error('Network error:', error);
+      throw error;
+    }
+  }
 }
 
 // Type generated from the PokeAPI location-area list endpoint
@@ -97,6 +130,26 @@ export type LocationArea = {
     pokemon: {
       name: string;
       url: string;
+    };
+  }[];
+};
+
+// Type for a single Pokemon from the /pokemon/{name} endpoint
+export type Pokemon = {
+  id: number;
+  name: string;
+  base_experience: number;
+  height: number;
+  weight: number;
+  stats: {
+    base_stat: number;
+    stat: {
+      name: string;
+    };
+  }[];
+  types: {
+    type: {
+      name: string;
     };
   }[];
 };

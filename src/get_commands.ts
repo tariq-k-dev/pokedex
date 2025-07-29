@@ -90,5 +90,54 @@ export function getCommands(): Record<string, CLICommand> {
         }
       },
     },
+    catch: {
+      name: 'catch',
+      description: 'Attempts to catch a Pokemon and add it to your Pokedex.',
+      async callback(state: State, ...args: string[]) {
+        if (args.length !== 1) {
+          console.log('Error: You must provide the name of one Pokemon.');
+          console.log('Example: catch pikachu');
+          return;
+        }
+        const pokemonName = args[0];
+
+        if (state.pokedex[pokemonName]) {
+          console.log(`${pokemonName} is already in your Pokedex!`);
+          return;
+        }
+
+        console.log(`Throwing a Pokeball at ${pokemonName}...`);
+
+        try {
+          const pokemon = await state.pokeapi.fetchPokemonByName(pokemonName);
+
+          if (!pokemon) {
+            console.log(`Pokemon "${pokemonName}" not found.`);
+            return;
+          }
+
+          // The higher the base_experience, the lower the chance.
+          // We'll use a threshold to calculate a probability.
+          // A value of 300 gives a decent chance for most early-game Pokemon.
+          const CATCH_THRESHOLD = 300;
+          const catchChance = Math.max(
+            0.1,
+            (CATCH_THRESHOLD - pokemon.base_experience) / CATCH_THRESHOLD
+          );
+          const roll = Math.random();
+
+          if (roll < catchChance) {
+            console.log(`${pokemonName} was caught!`);
+            state.pokedex[pokemonName] = pokemon;
+          } else {
+            console.log(`${pokemonName} escaped!`);
+          }
+        } catch (error) {
+          console.error(
+            'An error occurred while trying to catch the Pokemon.'
+          );
+        }
+      },
+    },
   };
 }
