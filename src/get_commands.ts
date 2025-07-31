@@ -117,7 +117,7 @@ export function getCommands(): Record<string, CLICommand> {
           }
 
           // The higher the base_experience, the lower the chance.
-          // We'll use a threshold to calculate a probability.
+          // Use a threshold to calculate a probability.
           // A value of 300 gives a decent chance for most early-game Pokemon.
           const CATCH_THRESHOLD = 300;
           const catchChance = Math.max(
@@ -128,6 +128,7 @@ export function getCommands(): Record<string, CLICommand> {
 
           if (roll < catchChance) {
             console.log(`${pokemonName} was caught!`);
+            console.log('You may now inspect it with the inspect command.');
             state.pokedex[pokemonName] = pokemon;
           } else {
             console.log(`${pokemonName} escaped!`);
@@ -166,6 +167,24 @@ export function getCommands(): Record<string, CLICommand> {
         console.log('Types:');
         pokemon.types.forEach((typeInfo) => {
           console.log(`  - ${typeInfo.type.name}`);
+        });
+      },
+    },
+    pokedex: {
+      name: 'pokedex',
+      description: 'Displays a list of all Pokemon you have caught.',
+      // This command doesn't need args, but include the parameter to match the type signature.
+      async callback(state: State) {
+        const caughtPokemonNames = Object.keys(state.pokedex);
+
+        if (caughtPokemonNames.length === 0) {
+          console.log('Your Pokedex is empty. Go catch some Pokemon!');
+          return;
+        }
+
+        console.log('Your Pokedex:');
+        caughtPokemonNames.forEach((pokemonName) => {
+          console.log(` - ${pokemonName}`);
         });
       },
     },
